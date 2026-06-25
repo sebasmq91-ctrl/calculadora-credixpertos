@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credixpertos · Calculadora de Crédito</title>
+<!-- PWA: conecta la app con su "cedula" (manifest) y define color e iconos -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#072B30">
+<meta name="description" content="Calculadora de crédito para asesoría: cuota, valor y tasa.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Credixpertos">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dark:#072B30; --turq:#12CBE3; --turq-deep:#0FB3C9; --white:#FFFFFF;
+    --ink:#0B2A2E; --muted:#5C7479; --line:#E2EBEC; --panel:#F2F6F7;
+    --soft:#E7FAFD; --shadow:0 10px 30px rgba(7,43,48,.10);
+    --display:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:var(--body);color:var(--ink);background:var(--panel);
+    -webkit-font-smoothing:antialiased;line-height:1.45}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px 56px}
+
+  /* Header */
+  header{background:var(--dark);color:var(--white)}
+  .head-in{max-width:760px;margin:0 auto;padding:18px 16px;display:flex;align-items:center;gap:14px}
+  .mark{flex:0 0 auto;width:42px;height:42px}
+  .brand h1{font-family:var(--display);font-weight:700;font-size:1.18rem;margin:0;letter-spacing:.2px}
+  .brand p{margin:2px 0 0;font-size:.74rem;color:var(--turq);font-style:italic;letter-spacing:.2px}
+  .head-in .spacer{flex:1}
+  .gear{appearance:none;border:1px solid rgba(255,255,255,.25);background:transparent;color:var(--white);
+    font-family:var(--body);font-size:.78rem;font-weight:600;padding:8px 12px;border-radius:10px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;transition:.15s}
+  .gear:hover{background:rgba(255,255,255,.10);border-color:var(--turq)}
+
+  .subbar{background:#04181B;color:#BFE9EF;font-size:.82rem}
+  .subbar .si{max-width:760px;margin:0 auto;padding:9px 16px;font-weight:500}
+
+  /* Banner */
+  .banner{margin-top:16px;background:#FFF8E6;border:1px solid #F2DCA0;color:#6B5410;
+    border-radius:12px;padding:11px 14px;font-size:.82rem;display:flex;gap:10px;align-items:flex-start}
+  .banner b{color:#5a4509}
+  .banner button{margin-left:auto;background:none;border:none;color:#9a7a1a;cursor:pointer;font-weight:700;font-size:1rem;line-height:1}
+
+  /* Card */
+  .card{background:var(--white);border:1px solid var(--line);border-radius:18px;
+    box-shadow:var(--shadow);padding:20px;margin-top:16px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:560px){.row{grid-template-columns:1fr}}
+
+  label.f{display:block;font-size:.72rem;font-weight:600;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.6px;margin:0 0 6px}
+  .field{position:relative}
+  select,input{width:100%;font-family:var(--body);font-size:1rem;color:var(--ink);
+    background:var(--white);border:1.5px solid var(--line);border-radius:11px;padding:12px 13px;outline:none;transition:.15s}
+  select:focus,input:focus{border-color:var(--turq);box-shadow:0 0 0 3px rgba(18,203,227,.18)}
+  input[inputmode]{font-family:var(--display);font-weight:600}
+  .suffix{position:absolute;right:13px;top:50%;transform:translateY(28%);font-size:.8rem;color:var(--muted);
+    font-family:var(--body);pointer-events:none}
+  .hint{font-size:.72rem;color:var(--muted);margin:6px 2px 0}
+  .hint b{color:var(--turq-deep)}
+
+  /* Segmented */
+  .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--panel);
+    border:1px solid var(--line);border-radius:13px;padding:5px;margin:4px 0 18px}
+  .seg button{appearance:none;border:none;background:transparent;font-family:var(--body);
+    font-weight:600;font-size:.86rem;color:var(--muted);padding:10px 8px;border-radius:9px;cursor:pointer;transition:.15s}
+  .seg button[aria-selected="true"]{background:var(--dark);color:var(--white)}
+  .seg-q{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 8px}
+
+  /* Seguro control */
+  .seguro{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--soft);
+    border:1px solid #BDEBF3;border-radius:13px;padding:12px 14px;margin-top:18px}
+  .seguro .sg-lab{font-size:.78rem;font-weight:600;color:var(--dark)}
+  .toggle{display:inline-flex;background:var(--white);border:1px solid #BDEBF3;border-radius:9px;overflow:hidden}
+  .toggle button{border:none;background:transparent;font-family:var(--body);font-weight:600;font-size:.78rem;
+    color:var(--muted);padding:7px 12px;cursor:pointer}
+  .toggle button[aria-selected="true"]{background:var(--turq);color:var(--dark)}
+  .seguro .sg-val{width:128px;margin-left:auto}
+  .seguro input{padding:9px 11px}
+
+  /* Result */
+  .result{margin-top:18px;background:linear-gradient(160deg,#0FB3C9,#12CBE3);border-radius:18px;
+    padding:22px;color:var(--dark);position:relative;overflow:hidden}
+  .result::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;
+    border:2px solid rgba(7,43,48,.10);border-radius:50%}
+  .result .rlab{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.75}
+  .result .rbig{font-family:var(--display);font-weight:700;font-size:2.5rem;line-height:1.05;margin:4px 0 2px;
+    font-variant-numeric:tabular-nums}
+  .result .rsub{font-size:.82rem;font-weight:600;opacity:.85}
+  .bd{margin-top:16px;border-top:1px solid rgba(7,43,48,.14);padding-top:6px}
+  .bd .b{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;
+    border-bottom:1px solid rgba(7,43,48,.08);font-size:.9rem}
+  .bd .b:last-child{border-bottom:none}
+  .bd .b span:first-child{color:rgba(7,43,48,.78);font-weight:500}
+  .bd .b span:last-child{font-family:var(--display);font-weight:600;font-variant-numeric:tabular-nums}
+  .chip{display:inline-block;background:var(--dark);color:var(--turq);font-family:var(--display);
+    font-weight:600;font-size:.82rem;padding:3px 9px;border-radius:7px;font-variant-numeric:tabular-nums}
+
+  /* Slider de tasa */
+  .slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;
+    background:#D6F5FA;outline:none;margin:14px 0 4px;cursor:pointer}
+  .slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;
+    background:var(--turq);border:3px solid #fff;box-shadow:0 1px 5px rgba(7,43,48,.35);cursor:pointer}
+  .slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--turq);
+    border:3px solid #fff;box-shadow:0 1px 5px rgba(7,43,48,.35);cursor:pointer}
+  .slider:focus-visible{box-shadow:0 0 0 3px rgba(18,203,227,.30)}
+  .rangeRow{display:flex;justify-content:space-between;font-family:var(--display);font-size:.72rem;
+    font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  /* Converter */
+  details.conv{margin-top:16px;background:var(--white);border:1px solid var(--line);border-radius:14px;padding:4px 16px}
+  details.conv summary{cursor:pointer;font-weight:600;font-size:.86rem;color:var(--dark);padding:12px 0;list-style:none}
+  details.conv summary::-webkit-details-marker{display:none}
+  details.conv summary::before{content:"+ ";color:var(--turq-deep);font-weight:700}
+  details.conv[open] summary::before{content:"– "}
+  .conv .row{padding-bottom:14px}
+
+  /* Share */
+  .share{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .share button{flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    border:1px solid transparent;border-radius:12px;padding:13px 16px;font-family:var(--body);
+    font-weight:600;font-size:.9rem;cursor:pointer;transition:.15s}
+  .btn-wa{background:#25D366;color:#fff}
+  .btn-wa:hover{background:#1FB457}
+  .btn-wa svg{width:18px;height:18px}
+  .btn-copy{background:var(--white);color:var(--dark);border-color:var(--line)}
+  .btn-copy:hover{border-color:var(--turq)}
+  .btn-pdf{width:100%;margin-top:10px;background:var(--dark);color:#fff;border:none;border-radius:12px;
+    padding:13px 16px;font-family:var(--body);font-weight:600;font-size:.9rem;cursor:pointer;transition:.15s}
+  .btn-pdf:hover{opacity:.92}
+  .sg-lab small{font-weight:500;color:var(--muted);font-size:.7rem}
+
+  /* Documento imprimible (tabla de amortización) */
+  #docView{display:none}
+  @media print{
+    @page{size:A4;margin:13mm}
+    body{background:#fff !important}
+    body>*:not(#docView){display:none !important}
+    #docView{display:block !important}
+  }
+  #docView{font-family:var(--body);color:#0B2A2E;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #docView .doc-head{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--turq);padding-bottom:10px}
+  #docView .doc-head h1{font-family:var(--display);font-size:18pt;margin:0;color:var(--dark)}
+  #docView .doc-head p{margin:1px 0 0;font-size:8pt;color:var(--turq-deep);font-style:italic}
+  #docView .doc-kic{margin-left:auto;text-align:right;font-size:9pt;color:var(--muted)}
+  #docView h2.doc-title{font-size:12pt;color:var(--dark);margin:14px 0 6px}
+  #docView .doc-sum{width:100%;border-collapse:collapse;font-size:9pt}
+  #docView .doc-sum td{padding:4px 8px;border:1px solid var(--line)}
+  #docView .doc-sum td:nth-child(odd){background:var(--panel);font-weight:600;color:var(--muted);width:22%}
+  #docView .doc-sum td.doc-net{background:var(--turq) !important;color:var(--dark) !important;font-weight:700 !important}
+  #docView .doc-disc{border:1px solid #F2DCA0;background:#FFF8E6;color:#6B5410;font-size:8.5pt;
+    padding:9px 12px;border-radius:8px;margin:12px 0}
+  #docView table.doc-table{width:100%;border-collapse:collapse;font-size:7.6pt;margin-top:4px}
+  #docView table.doc-table thead{display:table-header-group}
+  #docView table.doc-table th{background:var(--dark);color:#fff;border:1px solid var(--dark);padding:4px 5px}
+  #docView table.doc-table td{border:1px solid #DCE6E7;padding:3px 5px;text-align:right}
+  #docView table.doc-table th{text-align:right}
+  #docView table.doc-table th:first-child,#docView table.doc-table td:first-child,
+  #docView table.doc-table th:nth-child(2),#docView table.doc-table td:nth-child(2){text-align:center}
+  #docView table.doc-table tbody tr:nth-child(even){background:var(--panel)}
+  #docView .doc-foot{margin-top:14px;border-top:1px solid var(--line);padding-top:8px;
+    font-size:8pt;color:var(--muted);text-align:center}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);
+    background:var(--dark);color:#fff;padding:11px 18px;border-radius:12px;font-size:.86rem;font-weight:600;
+    opacity:0;pointer-events:none;transition:.2s;z-index:60}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  footer{text-align:center;color:var(--muted);font-size:.76rem;margin-top:26px;line-height:1.6}
+  footer b{color:var(--dark)}
+
+  /* Modal */
+  .ov{position:fixed;inset:0;background:rgba(7,43,48,.55);display:none;align-items:flex-start;
+    justify-content:center;padding:24px 14px;z-index:50;overflow:auto}
+  .ov.on{display:flex}
+  .modal{background:var(--white);border-radius:18px;max-width:680px;width:100%;padding:22px;box-shadow:var(--shadow)}
+  .modal h2{font-family:var(--display);margin:0 0 4px;color:var(--dark);font-size:1.2rem}
+  .modal .mh{font-size:.84rem;color:var(--muted);margin:0 0 16px}
+  .ent-head,.ent-row{display:grid;grid-template-columns:1.5fr .85fr .85fr .85fr 34px;gap:7px;align-items:center}
+  .ent-head{font-size:.68rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin-bottom:6px}
+  .ent-row{margin-bottom:8px}
+  .ent-row input{padding:9px 10px;font-size:.9rem}
+  .ent-row .del{appearance:none;border:1px solid var(--line);background:var(--white);color:#C0392B;
+    border-radius:9px;font-weight:700;cursor:pointer;height:38px}
+  .mbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .btn{appearance:none;border:none;border-radius:11px;padding:11px 16px;font-family:var(--body);
+    font-weight:600;font-size:.86rem;cursor:pointer;transition:.15s}
+  .btn-pri{background:var(--turq);color:var(--dark)} .btn-pri:hover{background:var(--turq-deep)}
+  .btn-dark{background:var(--dark);color:var(--white)} .btn-dark:hover{opacity:.9}
+  .btn-ghost{background:var(--white);color:var(--dark);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--turq)}
+  .lock{text-align:center;padding:18px 0}
+  .lock input{max-width:240px;margin:12px auto 0;text-align:center}
+  .err{color:#C0392B;font-size:.8rem;margin-top:8px;min-height:1em}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-in">
+    <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <path d="M40 24a16 16 0 1 1-6-12.5" stroke="#12CBE3" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M30 6l6 6-8 3z" fill="#12CBE3"/>
+    </svg>
+    <div class="brand">
+      <h1>Credixpertos</h1>
+      <p>más que un crédito, una solución.</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="gear" id="openAdmin">⚙ Editar entidades</button>
+  </div>
+  <div class="subbar"><div class="si">Calculadora de crédito · estimación para asesoría</div></div>
+</header>
+
+<div class="wrap">
+  <div class="banner" id="banner">
+    <span>⚠</span>
+    <div><b>Tasas de ejemplo.</b> Verifícalas y ajústalas en <b>Editar entidades</b> antes de compartir la herramienta con el equipo. El seguro de vida viene en <b>$3.500 por millón</b> (editable).</div>
+    <button id="closeBanner" title="Ocultar">×</button>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="field">
+        <label class="f" for="entidad">Entidad</label>
+        <select id="entidad"></select>
+        <div class="hint" id="plazoHint"></div>
+      </div>
+      <div class="field">
+        <label class="f" for="tasa">Tasa mensual (M.V.)</label>
+        <input id="tasa" inputmode="decimal" value="1,30">
+        <span class="suffix">% m.v.</span>
+        <input type="range" id="tasaSlider" class="slider" min="1.1" max="1.8" step="0.01" value="1.3" aria-label="Ajustar tasa dentro del rango">
+        <div class="rangeRow"><span id="rangeMin">—</span><span id="rangeMax">—</span></div>
+        <div class="hint">Rango de <b id="entName">la entidad</b> · mueve según el perfil · equivale a <b id="eaShow">—</b> E.A.</div>
+      </div>
+    </div>
+
+    <div class="seg-q">¿Qué quieres calcular?</div>
+    <div class="seg" role="tablist">
+      <button role="tab" data-mode="cuota" aria-selected="true">Cuota</button>
+      <button role="tab" data-mode="valor" aria-selected="false">Valor del crédito</button>
+      <button role="tab" data-mode="tasa" aria-selected="false">Tasa</button>
+    </div>
+
+    <div class="row" id="inputs"></div>
+
+    <div class="seguro">
+      <span class="sg-lab">Seguro de vida</span>
+      <div class="toggle" role="group" aria-label="Tipo de seguro">
+        <button data-seg="millon" aria-selected="true">Por millón</button>
+        <button data-seg="fijo" aria-selected="false">Fijo</button>
+      </div>
+      <div class="sg-val field">
+        <input id="seguroVal" inputmode="numeric" value="3.500">
+        <span class="suffix" id="seguroSuf">/ millón</span>
+      </div>
+    </div>
+
+    <div class="seguro fianza-row">
+      <span class="sg-lab">Fianza <small>(cliente reportado)</small></span>
+      <div class="toggle fianza-toggle" role="group" aria-label="Tipo de fianza">
+        <button data-fz="pct" aria-selected="true">%</button>
+        <button data-fz="fijo" aria-selected="false">$</button>
+      </div>
+      <div class="sg-val field">
+        <input id="fianzaVal" inputmode="decimal" value="0">
+        <span class="suffix" id="fianzaSuf">%</span>
+      </div>
+    </div>
+
+    <div class="result" id="result"></div>
+
+    <div class="share">
+      <button class="btn-wa" id="shareWa">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 2.1.55 4.06 1.6 5.83L2 22l4.4-1.15a9.9 9.9 0 0 0 5.64 1.74h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 1.8c2.18 0 4.23.85 5.77 2.39a8.1 8.1 0 0 1 2.39 5.77c0 4.5-3.66 8.15-8.16 8.15a8.1 8.1 0 0 1-4.15-1.14l-.3-.18-2.61.68.7-2.55-.2-.31a8.13 8.13 0 0 1-1.25-4.35c0-4.5 3.66-8.16 8.16-8.16zm-2.6 4.4c-.13 0-.34.05-.52.24-.18.18-.69.67-.69 1.64 0 .97.71 1.9.81 2.04.1.13 1.39 2.21 3.39 3.02 1.66.68 2 .55 2.36.51.36-.03 1.17-.48 1.34-.94.16-.46.16-.85.11-.94-.05-.08-.18-.13-.38-.23-.2-.1-1.17-.58-1.35-.64-.18-.07-.32-.1-.45.1-.13.18-.51.64-.63.77-.12.13-.23.15-.43.05-.2-.1-.84-.31-1.6-.99-.59-.53-.99-1.18-1.11-1.38-.12-.2-.01-.31.09-.41.09-.09.2-.23.3-.35.1-.12.13-.2.2-.34.07-.13.03-.25-.02-.35-.05-.1-.44-1.08-.62-1.48-.16-.38-.32-.33-.44-.34h-.38z"/></svg>
+        Compartir por WhatsApp
+      </button>
+      <button class="btn-copy" id="copyRes">Copiar resumen</button>
+    </div>
+    <button class="btn-pdf" id="genPdf">📄 Generar tabla de amortización (PDF)</button>
+  </div>
+
+  <details class="conv">
+    <summary>Conversor de tasas (M.V. ↔ E.A.)</summary>
+    <div class="row">
+      <div class="field">
+        <label class="f" for="cMv">Tasa mensual (M.V.)</label>
+        <input id="cMv" inputmode="decimal" value="1,30"><span class="suffix">%</span>
+        <div class="hint">= <b id="cEaOut">—</b> efectiva anual</div>
+      </div>
+      <div class="field">
+        <label class="f" for="cEa">Tasa efectiva anual (E.A.)</label>
+        <input id="cEa" inputmode="decimal" value="16,50"><span class="suffix">%</span>
+        <div class="hint">= <b id="cMvOut">—</b> mensual M.V.</div>
+      </div>
+    </div>
+  </details>
+
+  <footer>
+    <b>Cálculo aproximado</b> de cotización (sistema francés, cuota fija). El seguro se calcula sobre el valor inicial del crédito.<br>
+    La cuota real depende de las condiciones vigentes de cada entidad. · <b>Credixpertos</b>
+  </footer>
+</div>
+
+<!-- Documento imprimible (tabla de amortización). Oculto en pantalla; solo aparece al imprimir. -->
+<div id="docView"></div>
+
+<!-- Admin modal -->
+<div class="ov" id="ov">
+  <div class="modal">
+    <div id="lockView" class="lock">
+      <h2>Editar entidades</h2>
+      <p class="mh">Ingresa la clave para modificar tasas y plazos.</p>
+      <input id="pw" type="password" placeholder="Clave" inputmode="text">
+      <div class="err" id="pwErr"></div>
+      <div class="mbtns" style="justify-content:center">
+        <button class="btn btn-ghost" id="cancelLock">Cancelar</button>
+        <button class="btn btn-dark" id="unlock">Entrar</button>
+      </div>
+    </div>
+
+    <div id="editView" style="display:none">
+      <h2>Entidades</h2>
+      <p class="mh">Estos valores alimentan el selector. Se guardan en este navegador; usa Exportar para compartir la configuración con el equipo.</p>
+      <div class="ent-head"><span>Entidad</span><span>Tasa mín %</span><span>Tasa máx %</span><span>Plazo máx</span><span></span></div>
+      <div id="entList"></div>
+      <button class="btn btn-ghost" id="addEnt" style="margin-top:6px">+ Agregar entidad</button>
+      <div class="mbtns">
+        <button class="btn btn-pri" id="saveEnt">Guardar</button>
+        <button class="btn btn-dark" id="exportEnt">Exportar configuración</button>
+        <button class="btn btn-ghost" id="importEnt">Importar</button>
+        <button class="btn btn-ghost" id="closeEdit" style="margin-left:auto">Cerrar</button>
+      </div>
+      <input type="file" id="fileIn" accept="application/json" style="display:none">
+    </div>
+  </div>
+</div>
+
+<script>
+const PW="Credix2026";
+const LS_ENT="credixpertos_entidades_v1", LS_SEG="credixpertos_seguro_v1", LS_BAN="credixpertos_banner_v1", LS_FIANZA="credixpertos_fianza_v1";
+const DEFAULT_ENT=[
+  {nombre:"Sudameris",      tasaMin:1.10, tasaMax:1.80, plazoMax:144},
+  {nombre:"Banco Popular",  tasaMin:1.05, tasaMax:1.60, plazoMax:120},
+  {nombre:"Bancamía",       tasaMin:1.40, tasaMax:2.10, plazoMax:96}
+];
+function normEnt(e){
+  if(e.tasaMin==null) e.tasaMin = (e.tasa!=null ? e.tasa : 1.30);
+  if(e.tasaMax==null) e.tasaMax = (e.tasa!=null ? e.tasa : e.tasaMin);
+  if(e.tasaMax < e.tasaMin){const t=e.tasaMin; e.tasaMin=e.tasaMax; e.tasaMax=t;}
+  delete e.tasa; return e;
+}
+
+/* ---------- estado ---------- */
+let entidades = (load(LS_ENT) || DEFAULT_ENT.slice()).map(normEnt);
+let segState  = load(LS_SEG) || {modo:"millon", valor:3500};
+let fianzaState = load(LS_FIANZA) || {modo:"pct", valor:0};
+let mode="cuota";
+
+/* ---------- utils ---------- */
+function load(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+const COP=new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
+const fmt$=v=>isFinite(v)&&v>0?COP.format(Math.round(v)):'—';
+const fmtPm=i=>isFinite(i)?(i*100).toLocaleString('es-CO',{minimumFractionDigits:3,maximumFractionDigits:3})+'%':'—';
+const fmtPa=e=>isFinite(e)?(e*100).toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})+'%':'—';
+const num=s=>{s=(''+s).replace(/[^\d,.-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',', '.');const n=parseFloat(s);return isNaN(n)?0:n;};
+const intFromField=s=>{const n=parseInt((''+s).replace(/\D/g,''),10);return isNaN(n)?0:n;};
+const groupInt=n=>n?Math.round(n).toLocaleString('es-CO'):'';
+const fmt$0=v=>isFinite(v)?COP.format(Math.round(v)):'—';
+const fDate=d=>new Intl.DateTimeFormat('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'}).format(d);
+const fmtTasaField=x=>Number(x).toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:3});
+
+/* ---------- finanzas ---------- */
+function payment(P,i,n){if(n<=0)return 0;if(i===0)return P/n;const f=Math.pow(1+i,n);return P*i*f/(f-1);}
+function factorMillon(i,n){return payment(1000000,i,n);}
+function ea(i){return Math.pow(1+i,12)-1;}
+function mvFromEa(e){return Math.pow(1+e,1/12)-1;}
+function seguroMensual(valor){return segState.modo==="millon" ? (valor/1e6)*segState.valor : segState.valor;}
+function fianzaValor(P){return fianzaState.modo==="pct" ? P*(fianzaState.valor/100) : fianzaState.valor;}
+function solveRate(P,cuotaFin,n){
+  if(!(P>0)||!(n>0)||!(cuotaFin>0))return NaN;
+  if(cuotaFin*n<=P) return cuotaFin*n===P?0:NaN;
+  let lo=0,hi=1;
+  for(let k=0;k<200;k++){const m=(lo+hi)/2;payment(P,m,n)>cuotaFin?hi=m:lo=m;}
+  return (lo+hi)/2;
+}
+
+/* ---------- inputs por modo ---------- */
+const INPUTS={
+  cuota:[{id:"valor",lab:"Valor del crédito",suf:"$",v:"20.000.000"},{id:"plazo",lab:"Plazo (meses)",suf:"meses",v:"72"}],
+  valor:[{id:"cuota",lab:"Cuota mensual (con seguro)",suf:"$",v:"500.000"},{id:"plazo",lab:"Plazo (meses)",suf:"meses",v:"72"}],
+  tasa:[{id:"valor",lab:"Valor del crédito",suf:"$",v:"20.000.000"},{id:"plazo",lab:"Plazo (meses)",suf:"meses",v:"72"},{id:"cuota",lab:"Cuota mensual (con seguro)",suf:"$",v:"500.000"}]
+};
+function renderInputs(){
+  const box=document.getElementById('inputs');box.innerHTML='';
+  INPUTS[mode].forEach(f=>{
+    const wrap=document.createElement('div');wrap.className='field';
+    wrap.innerHTML=`<label class="f" for="${f.id}">${f.lab}</label>
+      <input id="${f.id}" inputmode="numeric" value="${f.v}"><span class="suffix">${f.suf}</span>`;
+    box.appendChild(wrap);
+  });
+  box.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input',()=>{ if(inp.id!=='plazo'){const c=inp.selectionStart;inp.value=groupInt(intFromField(inp.value));} compute();});
+  });
+}
+
+/* ---------- selector ---------- */
+function fillSelect(){
+  const sel=document.getElementById('entidad');sel.innerHTML='';
+  if(!entidades.length){sel.innerHTML='<option value="-1">— sin entidades —</option>';return;}
+  entidades.forEach((e,i)=>{const o=document.createElement('option');o.value=i;o.textContent=e.nombre;sel.appendChild(o);});
+  applyEntidad();
+}
+function applyEntidad(){
+  const i=+document.getElementById('entidad').value;
+  const e=entidades[i];
+  if(e){
+    const slider=document.getElementById('tasaSlider');
+    slider.min=e.tasaMin; slider.max=e.tasaMax; slider.step=0.01;
+    const mid=(e.tasaMin+e.tasaMax)/2;
+    slider.value=mid;
+    document.getElementById('tasa').value=fmtTasaField(mid);
+    document.getElementById('rangeMin').textContent=fmtTasaField(e.tasaMin)+'%';
+    document.getElementById('rangeMax').textContent=fmtTasaField(e.tasaMax)+'%';
+    document.getElementById('entName').textContent=e.nombre;
+    document.getElementById('plazoHint').innerHTML=`Plazo máximo: <b>${e.plazoMax} meses</b>`;
+  }
+  compute();
+}
+
+/* ---------- cálculo principal ---------- */
+let LAST=null;
+function compute(){
+  const i=num(document.getElementById('tasa').value)/100;
+  document.getElementById('eaShow').textContent=fmtPa(ea(i));
+  const g=id=>{const el=document.getElementById(id);return el?intFromField(el.value):0;};
+  const entSel=document.getElementById('entidad');
+  const ent=entidades[+entSel.value]?entidades[+entSel.value].nombre:'';
+  let big,blab,bsub,rows=[],L={mode,ent,i};
+
+  if(mode==='cuota'){
+    const P=g('valor'),n=g('plazo');
+    const cf=payment(P,i,n), seg=seguroMensual(P), tot=cf+seg, fm=factorMillon(i,n);
+    big=fmt$(tot); blab="Cuota mensual estimada"; bsub=`Crédito de ${fmt$(P)} a ${n} meses`;
+    rows=[["Cuota sin seguro",fmt$(cf)],["Seguro de vida mensual",fmt$(seg)],
+      ["Factor por millón",`<span class="chip">${fmt$(fm)}</span>`],
+      ["Tasa M.V. / E.A.",`${fmtPm(i)} · ${fmtPa(ea(i))}`]];
+    Object.assign(L,{P,n,cf,seg,tot,fm});
+  }
+  else if(mode==='valor'){
+    const ct=g('cuota'),n=g('plazo'),fm=factorMillon(i,n);
+    let P;
+    if(segState.modo==='millon') P=ct*1e6/(fm+segState.valor);
+    else P=(ct-segState.valor)*1e6/fm;
+    const cf=payment(P,i,n), seg=seguroMensual(P);
+    big=fmt$(P); blab="Valor de crédito estimado"; bsub=`Con cuota de ${fmt$(ct)} a ${n} meses`;
+    rows=[["Cuota sin seguro",fmt$(cf)],["Seguro de vida mensual",fmt$(seg)],
+      ["Factor por millón",`<span class="chip">${fmt$(fm)}</span>`],
+      ["Tasa M.V. / E.A.",`${fmtPm(i)} · ${fmtPa(ea(i))}`]];
+    Object.assign(L,{ct,n,P,cf,seg,fm});
+  }
+  else{
+    const P=g('valor'),n=g('plazo'),ct=g('cuota');
+    const seg=seguroMensual(P), cf=ct-seg, r=solveRate(P,cf,n), fm=isFinite(r)?factorMillon(r,n):NaN;
+    big=isFinite(r)?fmtPm(r):'Revisa los datos'; blab="Tasa mensual (M.V.)";
+    bsub=isFinite(r)?`Equivale a ${fmtPa(ea(r))} E.A.`:"La cuota es muy baja para ese crédito y plazo";
+    rows=[["Cuota sin seguro",fmt$(cf)],["Seguro de vida mensual",fmt$(seg)],
+      ["Factor por millón",isFinite(r)?`<span class="chip">${fmt$(fm)}</span>`:'—'],
+      ["Tasa E.A.",isFinite(r)?fmtPa(ea(r)):'—']];
+    Object.assign(L,{P,n,ct,seg,cf,r,fm});
+  }
+  const _fz=fianzaValor(L.P), _neto=L.P-_fz; Object.assign(L,{fianza:_fz,neto:_neto});
+  if(_fz>0){ rows.push(["Fianza (cliente reportado)",'− '+fmt$(_fz)]); rows.push(["Neto a desembolsar",`<b>${fmt$(_neto)}</b>`]); }
+  LAST=L;
+  document.getElementById('result').innerHTML=`<div class="rlab">${blab}</div><div class="rbig">${big}</div><div class="rsub">${bsub}</div>
+    <div class="bd">${rows.map(r=>`<div class="b"><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>`;
+}
+
+/* ---------- resumen para compartir ---------- */
+function buildResumen(){
+  const L=LAST; if(!L) return '';
+  const tasaTxt=`${fmtPm(L.i)} m.v. (${fmtPa(ea(L.i))} E.A.)`;
+  const ent=L.ent||'—';
+  let body='';
+  if(L.mode==='cuota'){
+    body=`Entidad: ${ent}\nCrédito: ${fmt$(L.P)}\nPlazo: ${L.n} meses\nTasa: ${tasaTxt}\n\n*Cuota mensual estimada: ${fmt$(L.tot)}*\n• Cuota sin seguro: ${fmt$(L.cf)}\n• Seguro de vida: ${fmt$(L.seg)}`;
+  } else if(L.mode==='valor'){
+    body=`Entidad: ${ent}\nCuota mensual: ${fmt$(L.ct)}\nPlazo: ${L.n} meses\nTasa: ${tasaTxt}\n\n*Valor de crédito estimado: ${fmt$(L.P)}*\n• Cuota sin seguro: ${fmt$(L.cf)}\n• Seguro de vida: ${fmt$(L.seg)}`;
+  } else {
+    const rt=isFinite(L.r)?`${fmtPm(L.r)} m.v. (${fmtPa(ea(L.r))} E.A.)`:'no calculable con esos datos';
+    body=`Entidad: ${ent}\nCrédito: ${fmt$(L.P)}\nCuota mensual: ${fmt$(L.ct)}\nPlazo: ${L.n} meses\n\n*Tasa estimada: ${rt}*`+(isFinite(L.r)?`\n• Factor por millón: ${fmt$(L.fm)}`:'');
+  }
+  const netLine=(L.fianza>0)?`\n• Fianza: − ${fmt$(L.fianza)}\n• *Neto a desembolsar: ${fmt$(L.neto)}*`:'';
+  return `*Credixpertos* — más que un crédito, una solución.\n\n*Cotización aproximada*\n${body}${netLine}\n\n_Valor aproximado de cotización; la cuota final depende de las condiciones vigentes de la entidad._`;
+}
+function toast(msg){
+  let el=document.getElementById('toast');
+  if(!el){el=document.createElement('div');el.id='toast';el.className='toast';document.body.appendChild(el);}
+  el.textContent=msg;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),1800);
+}
+
+/* ---------- tabla de amortización ---------- */
+function buildAmortizacion(){
+  const L=LAST; if(!L||!(L.P>0)||!(L.n>0)) return null;
+  const i=(L.mode==='tasa')?L.r:L.i;            // en modo "tasa" se usa la tasa calculada
+  if(!isFinite(i)||i<0) return null;
+  const n=L.n, P=L.P, cf=payment(P,i,n), seg=seguroMensual(P);
+  let saldo=P; const rows=[]; const hoy=new Date();
+  for(let k=1;k<=n;k++){
+    const interes=saldo*i;
+    let capital=cf-interes;
+    if(k===n) capital=saldo;                     // cierre exacto en la última cuota
+    saldo=Math.max(0,saldo-capital);
+    const fecha=new Date(hoy.getFullYear(),hoy.getMonth()+k,hoy.getDate());
+    rows.push({k,fecha,cuota:cf+seg,interes,capital,seg,saldo});
+  }
+  return {i,n,P,cf,seg,rows};
+}
+function buildDocHTML(a){
+  const L=LAST, hoy=new Date();
+  const sum=[
+    ['Entidad', L.ent||'—'],
+    ['Fecha', fDate(hoy)],
+    ['Valor del crédito', fmt$(a.P)],
+    ['Plazo', a.n+' meses'],
+    ['Tasa', `${fmtPm(a.i)} m.v. · ${fmtPa(ea(a.i))} E.A.`],
+    ['Seguro de vida', fmt$(a.seg)+' / mes'],
+    ['Factor por millón', fmt$(factorMillon(a.i,a.n))],
+    ['Cuota mensual total', fmt$(a.cf+a.seg)]
+  ];
+  let sumRows='';
+  for(let k=0;k<sum.length;k+=2){
+    const c1=sum[k], c2=sum[k+1]||['',''];
+    sumRows+=`<tr><td>${c1[0]}</td><td>${c1[1]}</td><td>${c2[0]}</td><td>${c2[1]}</td></tr>`;
+  }
+  if(L.fianza>0){
+    sumRows+=`<tr><td>Fianza (cliente reportado)</td><td>− ${fmt$(L.fianza)}</td>`+
+             `<td class="doc-net">Neto a desembolsar</td><td class="doc-net">${fmt$(L.neto)}</td></tr>`;
+  }
+  const tbl=a.rows.map(r=>`<tr><td>${r.k}</td><td>${fDate(r.fecha)}</td><td>${fmt$0(r.cuota)}</td><td>${fmt$0(r.interes)}</td><td>${fmt$0(r.capital)}</td><td>${fmt$0(r.seg)}</td><td>${fmt$0(r.saldo)}</td></tr>`).join('');
+  const logo=`<svg width="40" height="40" viewBox="0 0 48 48" fill="none"><path d="M40 24a16 16 0 1 1-6-12.5" stroke="#12CBE3" stroke-width="4.5" stroke-linecap="round"/><path d="M30 6l6 6-8 3z" fill="#12CBE3"/></svg>`;
+  return `
+    <div class="doc-head">${logo}
+      <div><h1>Credixpertos</h1><p>más que un crédito, una solución.</p></div>
+      <div class="doc-kic">Proyección de amortización<br><b>(estimada)</b></div>
+    </div>
+    <h2 class="doc-title">Resumen de la cotización</h2>
+    <table class="doc-sum"><tbody>${sumRows}</tbody></table>
+    <div class="doc-disc"><b>⚠ Importante:</b> Este documento es una <b>proyección estimada</b> con fines informativos y comerciales. <b>No constituye</b> una tabla de amortización oficial, una oferta vinculante ni una aprobación de crédito. Los valores definitivos dependen del estudio de crédito y de las condiciones vigentes de la entidad al momento del desembolso.</div>
+    <h2 class="doc-title">Tabla de amortización proyectada</h2>
+    <table class="doc-table">
+      <thead><tr><th>#</th><th>Fecha</th><th>Cuota</th><th>Interés</th><th>Capital</th><th>Seguro</th><th>Saldo</th></tr></thead>
+      <tbody>${tbl}</tbody>
+    </table>
+    <div class="doc-foot">Credixpertos · más que un crédito, una solución. · Documento generado el ${fDate(hoy)} · Valores aproximados sujetos a verificación.</div>`;
+}
+function generarPDF(){
+  const a=buildAmortizacion();
+  if(!a){ toast('Completa los datos para generar el PDF'); return; }
+  document.getElementById('docView').innerHTML=buildDocHTML(a);
+  window.print();
+}
+
+/* ---------- fianza ---------- */
+function syncFianzaUI(){
+  document.querySelectorAll('.fianza-toggle button').forEach(b=>b.setAttribute('aria-selected', b.dataset.fz===fianzaState.modo));
+  document.getElementById('fianzaSuf').textContent = fianzaState.modo==='pct' ? '%' : '$';
+  document.getElementById('fianzaVal').value = fianzaState.modo==='pct' ? (fianzaState.valor||0) : groupInt(fianzaState.valor);
+}
+
+/* ---------- conversor ---------- */
+function bindConv(){
+  const mv=document.getElementById('cMv'),eaIn=document.getElementById('cEa');
+  mv.addEventListener('input',()=>{document.getElementById('cEaOut').textContent=fmtPa(ea(num(mv.value)/100));});
+  eaIn.addEventListener('input',()=>{document.getElementById('cMvOut').textContent=fmtPm(mvFromEa(num(eaIn.value)/100));});
+  mv.dispatchEvent(new Event('input'));eaIn.dispatchEvent(new Event('input'));
+}
+
+/* ---------- seguro ---------- */
+function syncSeguroUI(){
+  document.querySelectorAll('.toggle button').forEach(b=>b.setAttribute('aria-selected', b.dataset.seg===segState.modo));
+  document.getElementById('seguroSuf').textContent = segState.modo==='millon' ? '/ millón' : '/ mes';
+  document.getElementById('seguroVal').value = groupInt(segState.valor);
+}
+
+/* ---------- admin ---------- */
+function openOv(){document.getElementById('ov').classList.add('on');
+  document.getElementById('lockView').style.display='block';
+  document.getElementById('editView').style.display='none';
+  document.getElementById('pw').value='';document.getElementById('pwErr').textContent='';}
+function closeOv(){document.getElementById('ov').classList.remove('on');}
+function renderEnt(){
+  const L=document.getElementById('entList');L.innerHTML='';
+  entidades.forEach((e,i)=>{
+    const r=document.createElement('div');r.className='ent-row';
+    r.innerHTML=`<input value="${e.nombre.replace(/"/g,'&quot;')}" data-k="nombre" data-i="${i}">
+      <input inputmode="decimal" value="${e.tasaMin}" data-k="tasaMin" data-i="${i}">
+      <input inputmode="decimal" value="${e.tasaMax}" data-k="tasaMax" data-i="${i}">
+      <input inputmode="numeric" value="${e.plazoMax}" data-k="plazoMax" data-i="${i}">
+      <button class="del" data-del="${i}" title="Eliminar">×</button>`;
+    L.appendChild(r);
+  });
+  L.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',()=>{
+    const i=+inp.dataset.i,k=inp.dataset.k;
+    entidades[i][k]= k==='nombre'?inp.value : (k==='tasaMin'||k==='tasaMax')?num(inp.value) : intFromField(inp.value);
+  }));
+  L.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{entidades.splice(+b.dataset.del,1);renderEnt();}));
+}
+
+/* ---------- eventos ---------- */
+document.getElementById('entidad').addEventListener('change',applyEntidad);
+document.getElementById('tasa').addEventListener('input',()=>{
+  const v=num(document.getElementById('tasa').value);
+  const sl=document.getElementById('tasaSlider');
+  if(isFinite(v)) sl.value=Math.min(Math.max(v,parseFloat(sl.min)),parseFloat(sl.max));
+  compute();
+});
+document.getElementById('tasaSlider').addEventListener('input',()=>{
+  document.getElementById('tasa').value=fmtTasaField(parseFloat(document.getElementById('tasaSlider').value));
+  compute();
+});
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+  mode=b.dataset.mode;
+  document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  renderInputs();compute();
+}));
+document.querySelectorAll('.toggle button').forEach(b=>b.addEventListener('click',()=>{
+  segState.modo=b.dataset.seg;syncSeguroUI();save(LS_SEG,segState);compute();
+}));
+document.getElementById('seguroVal').addEventListener('input',e=>{
+  segState.valor=intFromField(e.target.value);e.target.value=groupInt(segState.valor);save(LS_SEG,segState);compute();
+});
+document.querySelectorAll('.fianza-toggle button').forEach(b=>b.addEventListener('click',()=>{
+  fianzaState.modo=b.dataset.fz;syncFianzaUI();save(LS_FIANZA,fianzaState);compute();
+}));
+document.getElementById('fianzaVal').addEventListener('input',e=>{
+  if(fianzaState.modo==='pct'){ fianzaState.valor=num(e.target.value); }
+  else { fianzaState.valor=intFromField(e.target.value); e.target.value=groupInt(fianzaState.valor); }
+  save(LS_FIANZA,fianzaState);compute();
+});
+document.getElementById('genPdf').addEventListener('click',generarPDF);
+document.getElementById('shareWa').addEventListener('click',()=>{
+  const t=buildResumen(); if(!t) return;
+  window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');
+});
+document.getElementById('copyRes').addEventListener('click',async()=>{
+  const t=buildResumen(); if(!t) return;
+  try{ await navigator.clipboard.writeText(t); toast('Resumen copiado'); }
+  catch(e){ const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);
+    ta.select();try{document.execCommand('copy');toast('Resumen copiado');}catch(_){}ta.remove(); }
+});
+document.getElementById('openAdmin').addEventListener('click',openOv);
+document.getElementById('cancelLock').addEventListener('click',closeOv);
+document.getElementById('unlock').addEventListener('click',()=>{
+  if(document.getElementById('pw').value===PW){
+    document.getElementById('lockView').style.display='none';
+    document.getElementById('editView').style.display='block';renderEnt();
+  }else document.getElementById('pwErr').textContent='Clave incorrecta.';
+});
+document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('unlock').click();});
+document.getElementById('addEnt').addEventListener('click',()=>{entidades.push({nombre:"Nueva entidad",tasaMin:1.20,tasaMax:1.60,plazoMax:120});renderEnt();});
+document.getElementById('saveEnt').addEventListener('click',()=>{
+  entidades=entidades.filter(e=>e.nombre&&e.nombre.trim()).map(normEnt);
+  save(LS_ENT,entidades);fillSelect();closeOv();
+});
+document.getElementById('closeEdit').addEventListener('click',closeOv);
+document.getElementById('ov').addEventListener('click',e=>{if(e.target.id==='ov')closeOv();});
+document.getElementById('exportEnt').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify({entidades,seguro:segState},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='entidades_credixpertos.json';a.click();
+});
+document.getElementById('importEnt').addEventListener('click',()=>document.getElementById('fileIn').click());
+document.getElementById('fileIn').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);
+    if(Array.isArray(d.entidades))entidades=d.entidades.map(normEnt);
+    if(d.seguro&&typeof d.seguro.valor==='number')segState=d.seguro;
+    save(LS_ENT,entidades);save(LS_SEG,segState);syncSeguroUI();renderEnt();fillSelect();
+  }catch(err){alert('Archivo no válido.');}};
+  rd.readAsText(f);
+});
+document.getElementById('closeBanner').addEventListener('click',()=>{
+  document.getElementById('banner').style.display='none';save(LS_BAN,1);
+});
+
+/* ---------- init ---------- */
+if(load(LS_BAN))document.getElementById('banner').style.display='none';
+syncSeguroUI();syncFianzaUI();renderInputs();fillSelect();bindConv();compute();
+
+/* ---------- PWA: registra el service worker (solo funciona servido por http/https,
+   p.ej. GitHub Pages; al abrir el archivo local no pasa nada, falla en silencio) ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "Credixpertos · Calculadora de Crédito",
+  "short_name": "Credixpertos",
+  "description": "Calculadora de crédito para asesoría: estima cuota, valor del crédito y tasa.",
+  "lang": "es-CO",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#072B30",
+  "theme_color": "#072B30",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
